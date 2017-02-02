@@ -1,0 +1,41 @@
+$snow=0
+$rock=16
+$tree=32
+$guy=48
+$glyph_width=4
+$glyph_height=4
+$move_down=76       #80 is screen width, -4 is glyph_width
+$start_top=188 			#frame_buffer + 40 (middle) - 2 (1/2 glyph size)
+$width=80
+$height=60
+$start=-9
+$jump=0
+$overflow=1
+$greater_than=2
+$equals=3
+$start_button=4
+$top_0=4
+
+
+sub $r13, $r13
+addui 69, $r13
+mult $r13, $r13
+subi 1, $r13       #$r13 now contains $screen_size
+
+sub $r4, $r4
+addui 90, $r4
+mult $r4, $r4
+addui 93, $r4         #r4 framebuffer start, is top left
+sub $r3, $r3    #r3 is snow code
+sub $r5, $r5    #r5 is jump location
+sub $r6, $r6    #r6 is size iterator
+addi 0, $r3
+:snow_fill
+  store $r4, $r3
+  addi 1, $r4
+  sub $r5, $r5
+  addi $snow_fill, $r5
+  addi 1, $r6
+  cmp $r13, $r6           #check if screen is filled
+  bcond $equals, 2
+  jcond $jump, $r5

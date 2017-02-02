@@ -1,0 +1,110 @@
+$glyph_width=4
+$glyph_height=4
+$frame_buffer=4096
+$frame_chunk=64
+$start_top=188 			#frame_buffer + 40 (middle) - 2 (1/2 glyph size)
+$snow=0
+$guy=1
+$tree=19
+$rock=39
+$screensize=4800
+$screenchunk1=100
+$screenchunk2=48
+$width=80
+$height=60
+$start=-9
+$jump=0
+$overflow=1
+$greater_than=2
+$equals=3
+$start_button=4
+
+##
+# -> We are clearing out register 9, 10 & 11
+# $r9 is for the start value, this will be used
+#   to jump to the top if the button has not
+#   been pressed
+# $r10 is for the screen size, it will keep track
+#   of how large the frame buffer is
+# $r11 is for the offset of the frame buffer in
+#   the address space#
+# -> We then check for start parameters and jump
+#   to :begin if the button has not been pressed.
+##
+:begin
+  sub $r11, $r11
+  sub $r10, $r10
+  sub $r9, $r9
+  addi $screenchunk1, $r10
+  multi $screenchunk2, $r10
+  addi $framechunk, $r11
+  mult $r11, $r11
+  addi $begin, $r9
+  bcond $start_button, 2
+  jcond $jump, $r8
+
+##
+# -> Set up glyph iterating to map to the frame
+#   buffer.
+#   $frame_Buffer (screen with one glyph)
+#   +---------------+
+#   |               |
+#   |               |  filled with snow
+#   |               |
+#   +---------------+
+#   First we will attempt to fill screen with snow
+#   glyphs
+##
+sub $r2, $r2              #keeps track of snow
+sub $r3, $r3              #keeps track of snow_fill
+sub $r4, $r4              #iterates through frame buffer
+sub $r5, $r5              #size iterator
+addi 1, $r5
+add $r11, $r4             #iterator starts at fb offset
+:snow_fill
+  addi $snow_fill, $r3
+  addi $snow, $r2
+  store $r2, $r10           #store into buffer
+  addi 1, $r4               #iterate the fb iterator
+  addi 1, $r5               #iterate size
+  cmp $r5, $r10             #if we filled the buffer
+  bcond $equal, 2
+  jcond $jump, $r3          #jump to snow fill
+
+##
+# -> Let's draw the guy on the top center
+#   of the screen
+#   +---------------+
+#   |     xxxx      |
+#   |     xxxx      |
+#   |     xxxx      |
+#   |     xxxx      |   draw the guy, 4x4 glyph
+#   |               |   in middle-top of screen
+#   |               |
+#   |               |
+#   |               |
+#   +---------------+
+#  glyphs start at top left, $guy=1 then go
+#   right to left iterating, top right is
+#   $guy+3. bottom right would be $guy+15
+##
+sub $r2, $r2              #keeps track of guy
+sub $r3, $r3              #keeps track of guy_middle
+sub $r4, $r4              #iterates through frame buffer
+sub $r5, $r5              #size iterator
+sub $r6, $r6
+sub $r7, $r7
+addi $glyph_width, $r6    #for width check
+addi $glyph_height, $r7   #for height check
+addi 1, $r5
+addi $start_top, $r4
+add $r11, $r4             #iterator starts at middle top
+:guy_middle
+  addi $guy_middle, $r3
+  addi $guy, $r2
+  store $r2, $r10           #store into buffer
+  addi 1, $r4               #iterate the fb iterator
+  addi 1, $r5               #iterate size
+  cmp $r5, $r10             #if we filled the buffer
+  bcond $equal, 2
+  jcond $jump, $r3          #jump to snow_fill

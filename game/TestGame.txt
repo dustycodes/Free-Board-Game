@@ -1,0 +1,195 @@
+$snow=0
+$rock=16
+$tree=32
+$guy=48
+$glyph_width=4
+$glyph_height=4
+$move_down=76       #80 is screen width, -4 is glyph_width
+$start_top=188 			#frame_buffer + 40 (middle) - 2 (1/2 glyph size)
+$screen_width=80
+$screen_height=60
+$start=-9
+$jump=0
+$overflow=1
+$greater_than=2
+$equals=3
+$start_button=4
+$seed=17
+$movement=160     #2*80 or 2*(screen_width)
+
+sub $r13, $r13
+addui 69, $r13
+mult $r13, $r13
+subi 1, $r13       #$r13 now contains $screen_size
+
+:stack_pointer
+  sub $r1, $r1
+  addui 100, $r1
+  multi 10, $r1
+  multi 8, $r1
+
+sub $r2, $r2
+addui $main, $r2
+jcond $jump, $r2
+
+#draw full glyph at location top left
+# register $r3 holds glyph code
+# register $r2 is jump back register
+# register $r12 holds offset
+:draw
+  #sub $r3, $r3          # $r3 is Tree code
+  #addui $tree, $r3
+  sub $r4, $r4
+
+  addui 90, $r4
+  mult $r4, $r4
+  #addui 91, $r4         #r4 framebuffer start, is top left
+  subi 100, $r4
+  subi 100, $r4
+  subi 29, $r4
+
+  sub $r15, $r15
+  add $r4, $r15
+
+  #subi 129, $r4
+  add $r12, $r4
+  sub $r5, $r5          # $r5 is width iterator
+  sub $r6, $r6          # $r6 is height iterator
+:draw_w
+  store $r4, $r3
+  addui 1, $r3
+  addui 1, $r4
+  addui 1, $r5
+  cmpi $glyph_width, $r5
+  bcond $equals, 4
+  sub $r10, $r10
+  addui $draw_w, $r10
+  jcond $jump, $r10
+:draw_h
+  addui $move_down, $r4
+  sub $r5, $r5
+  addui 1, $r6
+  cmpi $glyph_height, $r6
+  bcond $equals, 4
+  sub $r10, $r10
+  addui $draw_w, $r10
+  jcond $jump, $r10
+  jcond $jump, $r2
+
+:move_glyphs
+  sub $r13, $r13  # $r13 is beginning of fb
+  addui 100, $r13
+  multi 80, $r13
+  #addui 91, $r13
+  subi 100, $r4
+  subi 100, $r4
+  subi 29, $r4
+  #subi 129, $r13
+
+  #for testing, stores in the bottom 2 rows
+  #addui 113, $r13
+  #mult  $r13, $r13
+  #addui 62, $r13
+
+  sub $r4, $r4
+  addui 113, $r4
+  mult  $r4, $r4
+  addui 62, $r4
+
+  #for testing
+  #addui 114, $r4
+  #mult $r4, $r4
+  #subi 3, $r4     #r4 is the end of fb
+
+  #sub $r3, $r3    #r3 is glyph code
+  #addui 33, $r3   #TODO remove this
+  sub $r5, $r5    #r5
+  sub $r6, $r6    #r6 temp
+  sub $r7, $r7    #r7 temp
+  addui $movement, $r7
+:move_one
+  #foreach glyph, we move it down
+  load $r4, $r5
+  sub $r6, $r6
+  add $r7, $r6
+  add $r4, $r6
+  store $r6, $r5
+
+  #store $r4, $r3
+  subi 1, $r4
+
+  #get jump ready
+  sub $r5, $r5
+  addui $move_one, $r5
+  #check if we are at the beginning
+  cmp $r4, $r13
+  bcond $equals, 2
+  jcond $jump, $r5    #jump to move_one
+
+  #TODO Test this
+  #clear out the pre-buffer
+  sub $r5, $r5
+  add $r13, $r5
+  addui $movement, $r5
+  sub $r3, $r3
+  sub $r4, $r4
+  addui $clear, $r4
+:clear
+  store $r5, $r3
+  subi 1, $r5
+  cmp $r5, $r13
+  bcond $equals, 2
+  jcond $jump, $r4
+  #TODO Test this
+
+  jcond $jump, $r2    #jump to return
+
+
+:main
+  # Move glyphs down by 2
+  sub $r3, $r3
+  sub $r2, $r2
+  addui $move_glyphs, $r3
+  addui $done_moving, $r2
+  jcond $jump, $r3
+:done_moving
+  # Add glyphs to top row
+  #TODO randomize the glyph and offset
+  sub $r3, $r3
+  sub $r12, $r12
+  # r12 has the offset, r3 has glyph code
+  addui $tree, $r3
+  store $r1, $r3
+:draw_top
+  addui $seed, $r12
+  sub $r2, $r2
+  sub $r10, $r10
+  addui $there, $r2
+  addui $draw, $r10
+  jcond $jump, $r10   #jump to draw with $r2, $r3, $r12 as params
+:there
+  sub $r3, $r3
+  load $r1, $r3
+  sub $r2, $r2
+  addui $screen_width, $r2
+  cmp $r2, $r12             # 80 < offset
+  bcond $greater_than, 4    #if offset is greater than screen branch
+  sub $r2, $r2
+  addui $draw_top, $r2
+  jcond $jump, $r2          #jump to the top of the buffer
+
+  #top has been drawn
+  sub $r2, $r12
+  store $r1, $r2
+
+:just_move
+  sub $r3, $r3
+  sub $r2, $r2
+  addui $move_glyphs, $r3
+  addui $just_move, $r2
+  jcond $jump, $r3
+
+:hold
+  sub $r8, $r8
+  addi $hold, $r8
+  jcond $jump, $r8

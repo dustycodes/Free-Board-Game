@@ -1,0 +1,20 @@
+sub $r2, $r2
+sub $r3, $r3
+addui 1, $r3
+:fib_seq
+  store $r1, $r2
+  subi 1, $r1
+  sub $r4, $r4
+  add $r2, $r4
+  add $r3, $r4
+  sub $r2, $r2
+  add $r3, $r2
+  sub $r3, $r3
+  add $r4, $r3
+  sub $r4, $r4
+  addui $screen_width, $r4
+  cmpu $r1, $r4
+  bcond $greater_than, 4     #check if $r1 > 80
+  sub $r4, $r4
+  addui $fib_seq, $r4
+  jcond $jump, $r4

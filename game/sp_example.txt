@@ -1,0 +1,13 @@
+:stack_pointer
+  sub $r1, $r1
+  addui 100, $r1
+  multi 10, $r1
+  multi 8, $r1
+
+:read
+  sub $r3, $r3
+  subi 6, $r1
+  load $r1, $r3
+  addi 6, $r1
+  sub $r15, $r15
+  add $r3, $r3

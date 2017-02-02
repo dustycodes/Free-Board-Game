@@ -1,0 +1,550 @@
+$row=80
+$less_than=2
+$guy_code=48
+$equals=3
+$jump=0
+$movement=4
+$seed=4
+$bigfoot=0
+$rock=16
+$tree=32
+
+#### SETUP & WAIT FOR START ####
+# extended frame buffer starts at 3393
+sub $efb, $efb
+addui 100, $efb
+multi 33, $efb
+addui 93, $efb
+
+# top row of visible frame buffer start at 8193
+sub $top_row, $top_row
+addui 100, $top_row
+multi 81, $top_row
+addui 93, $top_row
+
+# visible frame buffer ends at 12993
+sub $endfb, $endfb
+addui 114, $endfb
+mult $endfb, $endfb
+subi 3, $endfb
+
+# guy location starts 6 1/2 rows from the bottom right
+# note that this is the top left of the guy
+sub $guy_location, $guy_location
+add $endfb, $guy_location
+sub $temp, $temp
+addui $row, $temp
+multi 6, $temp              # move top left guy up 4 rows
+addui 40, $temp             # this is half screen width, put in middle
+sub $temp, $guy_location    # should be 12663 initially
+
+# set up boundary locations for the guy
+# left boundary
+sub $left_boundary, $left_boundary
+add $guy_location, $left_boundary
+subi 40, $left_boundary
+
+#right boundary
+sub $right_boundary, $right_boundary
+add $guy_location, $right_boundary
+addui 36, $right_boundary     #not 40 because it is top left of guy we check
+
+:start
+# TODO setup check for start game here
+sub $score, $score
+
+#### START THE GAME ####
+sub $iter, $iter
+:main
+
+#### --- move down --- ####
+#loc = $endfb - 1 row
+sub $loc, $loc
+add $endfb, $loc
+subi $row, $loc
+
+#newloc = loc + 1 row
+sub $newloc, $newloc
+add $loc, $newloc
+addui $row, $newloc
+
+#LOOP0
+#load loc data into temp
+sub $temp, $temp
+load $loc, $temp
+
+#store temp data into newloc
+store $newloc, $temp
+
+#newloc--
+subi 1, $newloc
+#loc--
+subi 1, $loc
+
+#if (newloc == efb), continue on
+cmp $efb, $newloc         #$efb < $newloc
+#else jump back to #LOOP0
+bcond $less_than, -6
+
+#### --- end of move down --- ####
+
+#### --- setup accelerometer data --- ####
+sub $temp, $temp
+
+#sub $score, $score
+#add $accel, $score
+
+#cmp $temp, $accel         #if accel == 0 break
+#bcond $equals, 5
+
+subi 12, $temp           # accel < temp
+cmp $accel, $temp         #if accel is negative
+bcond $less_than, 6   #TO ADDITION
+addui 24, $temp
+cmp $accel, $temp         # accel < temp
+bcond $less_than, 4  #TODO THERE
+subi $movement, $guy_location
+bcond $jump, 2
+addui $movement, $guy_location
+
+#TODO THERE
+
+#### --- draw guy --- ####
+
+#clear old guy
+sub $r10, $r10
+addu $guy_location, $r10
+sub $r12, $r12
+
+#row 1
+store $r10, $r12     #store snow into guy loc
+addui 1, $r10
+store $r10, $r12
+addui 1, $r10
+store $r10, $r12
+addui 1, $r10
+store $r10, $r12
+
+subi 4, $r10
+addui $row, $r10
+
+#row 2
+store $r10, $r12     #store snow into guy loc
+addui 1, $r10
+store $r10, $r12
+addui 1, $r10
+store $r10, $r12
+addui 1, $r10
+store $r10, $r12
+
+subi 4, $r10
+addui $row, $r10
+
+#row 3
+store $r10, $r12     #store snow into guy loc
+addui 1, $r10
+store $r10, $r12
+addui 1, $r10
+store $r10, $r12
+addui 1, $r10
+store $r10, $r12
+
+subi 4, $r10
+addui $row, $r10
+
+#row 4
+store $r10, $r12     #store snow into guy loc
+addui 1, $r10
+store $r10, $r12
+addui 1, $r10
+store $r10, $r12
+addui 1, $r10
+store $r10, $r12
+
+#guy_location += accel, this offsets the character to move him
+#add $accel, $guy_location         #TODO change this to be what we move by
+
+sub $r10, $r10
+addui $guy_code, $r10
+sub $r12, $r12          #for testing collisions
+sub $r13, $r13
+addui $guy_code, $r12
+subi 1, $r12
+addui $guy_code, $r13
+addui 17, $r13          #for testing collisions
+
+#check the boundaries of the screen
+#if(guy_location < right_boundary)
+# continue on
+#else
+# guy_location = right_boundary     #TODO maybe make it traverse
+cmp $guy_location, $right_boundary
+bcond $less_than, 4
+sub $guy_location, $guy_location
+add $right_boundary, $guy_location
+
+#if(left_boundary < guy_location)
+# continue on
+#else
+# guy_location = left_boundary
+cmp $left_boundary, $guy_location
+bcond $less_than, 3
+sub $guy_location, $guy_location
+add $left_boundary, $guy_location
+
+sub $loc, $loc
+add $guy_location, $loc
+
+#check the current glyph if it is not touching snow
+#store the guy code in loc, initially guy_location
+#guy_code++ && loc++ to move through glyph, we do this 4 times
+# ROW 1
+# COL 1
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 2
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 3
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 4
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#move down a row
+addui $row, $loc   #move down to the next row
+subi 4, $loc       #move to leftmost glyph
+
+# ROW 2
+# COL 1
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 2
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 3
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 4
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#move down a row
+addui $row, $loc   #move down to the next row
+subi 4, $loc       #move to leftmost glyph
+
+# ROW 3
+# COL 1
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 2
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 3
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 4
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#move down a row
+addui $row, $loc   #move down to the next row
+subi 4, $loc       #move to leftmost glyph
+
+# ROW 4
+# COL 1
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 2
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 3
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#COL 4
+sub $r11, $r11
+load $loc, $r11
+cmpi 0, $r11            #if glyph is snow
+bcond $equals, 8        #continue TODO change the offset
+cmp $r13, $r11          #if rightboundary < glyph exit
+bcond $less_than, 3     #exit
+cmp $r12, $r11          #if leftboundary < glyph continue
+bcond $less_than, 4
+sub $r11, $r11          #else
+addui $start, $r11      #start at :start label
+#jcond $jump, $r11       #restart the game
+sub $score, $score
+store $loc, $r10        #contains guy_code
+addui 1, $loc           #iterate to next location
+addui 1, $r10           #iterate next code
+
+#### --- done with draw guy --- ####
+
+#### --- recycle page --- ####
+#iterator the damn iterator
+addui 1, $iter
+#addui 1, $score
+
+#check if we need to push glyphs in the top
+cmpi 4, $iter
+bcond $equals, 2
+bcond $jump, 20   #TODO change this to jump over page recycling
+
+#if the page has moved 4 times
+sub $iter, $iter    #clear out iter
+
+#the current top of buffer
+sub $loc, $loc
+add $top_row, $loc
+
+#the top of the imaginary buffer
+sub $newloc, $newloc
+add $efb, $newloc
+
+#the stopping point
+sub $r10, $r10
+add $loc, $r10
+sub $r11, $r11
+addui $row, $r11
+multi 4, $r11
+add $r11, $r10   #r10 contains the stop point
+
+#LOOP1
+#load top_row data(loc) into temp
+sub $temp, $temp
+load $loc, $temp
+
+#store the data and move to next location
+store $newloc, $temp
+addui 1, $loc
+addui 1, $newloc
+
+#if (loc == stop_point), continue on
+cmp $loc, $r10
+bcond $equals, 2
+bcond $jump, -7
+
+#### --- done recycle page --- ####
+
+#### --- randomness --- ####
+
+
+
+
+#### --- done randomness --- ####
+
+#iterate score
+addui 1, $score
+
+#jump back to the top
+sub $r10, $r10
+addui $main, $r10
+jcond $jump, $r10

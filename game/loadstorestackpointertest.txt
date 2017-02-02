@@ -1,0 +1,38 @@
+#takes register $r3, $r4 and stores it in memory
+# on the stack $r1, clears it out, then loads it back.
+# JAL is $r10, $r15 shows leds
+$jump=0
+sub $r7, $r7
+addui $main, $r7
+jcond $jump, $r7
+
+:test_stores
+  store $r1, $r3
+  subi 1, $r1
+  store $r1, $r4
+  subi 1, $r1
+  sub $r3, $r3
+  sub $r4, $r4
+  addui 1, $r1
+  load $r1, $r4
+  addui 1, $r1
+  load $r1, $r3
+  jcond $jump, $r10
+
+:main
+  sub $r3, $r3
+  sub $r4, $r4
+  addui 101, $r3
+  addui 99, $r4
+  sub $r6, $r6
+  addui $test_stores, $r6
+  sub $r10, $r10
+  addui $ret, $r10
+  jcond $jump, $r6
+:ret
+  sub $r15, $r15
+  addu $r3, $r15
+:loop
+  sub $r7, $r7
+  addui $loop, $r7
+  jcond $jump, $r7

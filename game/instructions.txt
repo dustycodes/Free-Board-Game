@@ -1,0 +1,276 @@
+$glyph_address=100
+$glyph_width=4
+$glyph_height=4
+$frame_buffer=150
+$start_top=188 			#frame_buffer + 40 (middle) - 2 (1/2 glyph size)
+$snow=0
+$guy=1
+$tree=19
+$rock=39
+$screensize=4800
+$screenchunk=150
+$width=80
+$height=60
+$start=-9
+$jump=0
+$overflow=1
+$greater_than=2
+$equals=3
+$start_button=4
+
+:start
+sub $r10, $r10
+addi $screenchunk, $r10
+add $r10, $r10
+add $r10, $r10
+add $r10, $r10
+add $r10, $r10
+add $r10, $r10
+sub $r8, $r8
+addi $start, $r8
+cmpi 4, $r1 			#start register, ask max what to compare to
+bcond $start_button, 2
+jcond $jump, $r8
+#start the game by loading white into all locations
+
+#store snow everywhere
+#setup glyphs...
+# $r2 is the screen counter
+# $r3 is glyph iterator
+# $r4 is the actual glyph
+# $r5 is map iterator
+sub $r2, $r2
+
+#start with clear out
+:loop1
+sub $r3, $r3
+sub $r4, $r4
+sub $r5, $r5
+sub $r8, $r8
+addi $loop1, $r8
+
+#getting glyph
+addi $glyph_address, $r3	    #set to base address (snow)
+addi 0, $r3						#add immediates variables to grab different things
+load $r3, $r4					#load the glyph from memory
+
+#getting new map location
+addi $frame_buffer, $r5
+add $r3, $r5
+
+#now $r5 should be pointing to the right memory location, $r4 contains the right glyph
+store $r4, $r5
+addi 1, $r2						#iterate
+sub $r6, $r6
+cmp $r10, $r2
+bcond $equals, 2 						#break the loop if iterator == screensize
+jcond $jump, loop1   				#jumps back everytime iterator != screensize
+
+sub $r2, $r2					#iterator over width
+sub $r6, $r6					#iterator over hieght
+sub $r7, $r7					#iterate over map storage
+sub $r3, $r3					#glyph storage current location
+sub $r4, $r4					#glyph
+addi $glyph_address, $r3
+addi $guy, $r3
+sub $r5, $r5					#map current location
+addi $start_top, $r5
+
+:loop2
+sub $r8, $r8
+addi $loop2, $r8
+load $r3, $r4					#load in glyph
+store $r4, $r5					#store the glyph into map
+#addi 1, $r3						#iterate to next glyph location
+addi 1, $r2						#iterate iterater
+addi 1, $r5						#iterate map location
+cmpi $glyph_width, $r2			#check width $r2 == glyph_width
+bcond $greater_than, 2
+jcond $jump, $loop2
+sub $r2, $r2					#clear out row
+addi $start_top, $r5			#setting position on map
+addi $width, $r5				#to next row
+addi 1, $r6						#iterate hieght
+cmpi $glyph_height, $r6			#check height $r6 == glyph_height
+bcond $greater_than, 2
+jcond 0, loop2
+
+#guys is painted with snow
+
+
+
+
+
+
+
+
+TODO:
+draw out memory
+draw out mapping
+
+
+8x8 on a 640x480
+=> 80x60 = 4800
+1 is snow
+
+############## GUY ####################
+#0th ROW
+2 1000
+3 0100
+4 0010
+5 0001
+
+#1st ROW
+6 1000
+7 0100
+8 0010
+9 0001
+
+#2nd ROW
+10 1000
+11 0100
+12 0010
+13 0001
+
+#3rd ROW
+14 1000
+15 0100
+16 0010
+17 0001
+
+#4th ROW
+15 1000
+16 0100
+17 0010
+18 0001
+
+############### TREE ###################
+#0th ROW
+19 1000
+20 0100
+21 0010
+22 0001
+
+#1st ROW
+23 1000
+24 0100
+25 0010
+26 0001
+
+#2nd ROW
+27 1000
+28 0100
+29 0010
+30 0001
+
+#3rd ROW
+31 1000
+32 0100
+33 0010
+34 0001
+
+#4th ROW
+35 1000
+36 0100
+37 0010
+38 0001
+
+
+############### ROCK ###################
+#0th ROW
+39 1000
+40 0100
+41 0010
+42 0001
+
+#1st ROW
+43 1000
+44 0100
+45 0010
+46 0001
+
+#2nd ROW
+47 1000
+48 0100
+49 0010
+50 0001
+
+#3rd ROW
+51 1000
+52 0100
+53 0010
+54 0001
+
+#4th ROW
+55 1000
+56 0100
+57 0010
+58 0001
+
+
+
+
+
+
+
+$glyph_address=100
+$glyph_width=4
+$glyph_height=4
+$frame_buffer=150
+$start_top=188
+$snow=0
+$guy=1
+$tree=19
+$rock=39
+$screensize=4800
+$width=80
+$height=60
+sub $r9, $r9
+cmpi 4, $r1
+bcond 4, 2
+jcond 0, $r9
+sub $r2, $r2
+$loop1=6
+sub $r3, $r3
+sub $r4, $r4
+sub $r5, $r5
+addi $glyph_address, $r3
+addi 0, $r3
+load $r3, $r4
+addi $frame_buffer, $r5
+add $r3, $r5
+store $r4, $r5
+addi 1, $r2
+sub $r6, $r6
+addi $loop1, $r6
+sub $r10, $r10
+addi , $r10
+bcond 3, 2
+jcond 0, $r6
+sub $r2, $r2
+sub $r6, $r6
+sub $r7, $r7
+sub $r3, $r3
+sub $r4, $r4
+addi $glyph_address, $r3
+addi $guy, $r3
+sub $r5, $r5
+addi $start_top, $r5
+$loop2=30
+load $r3, $r4
+store $r4, $r5
+addi 1, $r3
+addi 1, $r2
+addi 1, $r5
+cmpi $glyph_width, $r2
+bcond 2, 2
+jcond 0, $loop2
+sub $r2, $r
+addi $start_top, $r5
+addi $width, $r5
+addi 1, $r6
+cmpi $glyph_height, $r6
+bcond 2, 2
+jcond 0, $loop2
+
+228 cmpui $screensize, $r2

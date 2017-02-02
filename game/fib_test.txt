@@ -1,0 +1,59 @@
+$glyph_address=100
+$glyph_width=4
+$glyph_height=4
+$frame_buffer=150
+$start_top=188 			#frame_buffer + 40 (middle) - 2 (1/2 glyph size)
+$snow=0
+$guy=1
+$tree=19
+$rock=39
+$screensize=4800
+$screenchunk=150
+$width=80
+$height=60
+$start=-9
+$jump=0
+$overflow=1
+$greater_than=2
+$equals=3
+$start_button=4
+$timer=10
+
+addi $timer, $r14
+multi 10, $r14
+#start fib sequence
+:flowed
+sub $r1, $r1
+sub $r2, $r2
+sub $r4, $r4
+sub $r10, $r10
+sub $r15, $r15
+addi 1, $r1
+addi 1, $r2
+addi 1, $r4
+addi 1, $r15
+
+:refib
+  sub $r3, $r3
+  addi $refib, $r3
+  addi 1, $r4
+  cmp $r14, $r4
+  bcond $equals, 2
+  jcond $jump, $r3    #jump to the top if !timer
+  addi 1, $r10
+  sub $r4, $r4
+  cmp $r14, $r10
+  bcond $equals, 2
+  jcond $jump, $r3
+
+  sub $r5, $r5
+  add $r2, $r5
+  add $r1, $r2
+  sub $r6, $r6
+  addi $flowed, $r6
+  jcond $overflow, $r6
+  sub $r1, $r1
+  add $r5, $r1
+  sub $r15, $r15
+  add $r2, $r15
+  jcond $jump, $r3

@@ -1,0 +1,31 @@
+$snow=0
+$rock=16
+$tree=32
+$guy=48
+$glyph_width=4
+$glyph_height=4
+$move_down=76       #80 is screen width, -4 is glyph_width
+$start_top=188 			#frame_buffer + 40 (middle) - 2 (1/2 glyph size)
+$screen_width=80
+$screen_height=60
+$start=-9
+$jump=0
+$overflow=1
+$greater_than=2
+$equals=3
+$start_button=4
+$seed=4
+
+sub $r8, $r8
+sub $r9, $r9
+addi 1, $r9
+#cmp input2 > input1
+#cmp $r8, $r9  #r8 > $r9     == 1
+#tests if cmp $r9 < $r8  #r8 > $r9     == 2
+#tests if right is greater than left
+cmp $r9, $r8  #r9 < $r8     == 2
+bcond $greater_than, 2
+addi 1, $debug
+addi 1, $debug
+
+#inf debug == 2
